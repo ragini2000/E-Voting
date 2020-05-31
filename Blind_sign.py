@@ -1,5 +1,12 @@
+#!/usr/bin/env python
+# coding: utf-8
 
-# Cryptomath Module for both protocols to be implemented
+# In[ ]:
+
+
+
+# Cryptomath Module
+
 import random
 
 def gcd(a, b):
@@ -133,17 +140,16 @@ def modularSqrt(a, p):
     if isSquare(a, p):
         return pow(a, (p + 1) // 4, p)
     return None
-########################################## END OF CRYPTOMATH PART ############################################## 
-#Class part of program
-import random, hashlib #Initialize Library
+###############################33
+import random, hashlib
 
-class Signer: 
-    #Creating the class to sign the vote
+class Signer:
+    
     def __init__(self):
         self.publicKey, self.privateKey = (self.generateInformation())
     
     def generateInformation(self):
-        # Generates public and private keys and saves them to a file.(RSA)
+        # Generates public and private keys and saves them to a file.
         p = findPrime()
         q = findPrime()
         phi = (p - 1)*(q - 1)
@@ -158,139 +164,121 @@ class Signer:
     
         d = findModInverse(e, phi)
    
-        publicInfo = {"n" : n, "e": e} #Public key of voter
-        privateInfo = {"n" : n, "d": d} #Private key of voter
+        publicInfo = {"n" : n, "e": e}
+        privateInfo = {"n" : n, "d": d}
     
-        return[(publicInfo),(privateInfo)] 
-        ###### This is MY Private and Public Key,Not CTFs Private/Public Key
-
+        return[(publicInfo),(privateInfo)]
+        
     def getPublicKey(self):
         return self.publicKey
     
     def signMessage(self, message, eligible):
-    	#Function to sign message if voter eligible.
         if eligible == "y":
             return pow(message, self.privateKey['d'], self.publicKey['n'])
         else:
             return None
         
     def verifyVoter(self, eligible):
-    	#Function to verify voter needs to be built using information sent to CTF and then received from it. 
         pass
         
  
 class Voter:
     def __init__(self, n, eligible):
-        self.eligible = eligible 
+        self.eligible = eligible
         
         foundR = False
         while not foundR:
-      		#find self.r that is relattively prime to n
             self.r = random.randint(2, n - 1)
             if gcd(self.r, n) == 1:
                 foundR = True
         
     def blindMessage(self, m, n, e):
-        #Function to blind the message. 
-         blindMessage = (m * pow(self.r,e,n)) % n
-         return blindMessage
+         
+        blindMessage = (m * pow(self.r,e,n)) % n
+
+        return blindMessage
          
     def unwrapSignature(self, signedBlindMessage, n):
-    	#Message received from CTF after being signed,function is to unblind it.
         rInv = findModInverse(self.r, n)
         
         return ((signedBlindMessage * rInv) % n)
     
     def getEligibility(self):
-    	#Always Eligibible by the CTF atm.
         return self.eligible
 
 def verifySignature(message, randNum, signature, publicE, publicN):
-	#Function to verify Signature of CTF.
-    return (int(hashlib.sha256(str(message) + str(randNum)).hexdigest(),16) == pow(signature, publicE, publicN))        
+    return (int(hashlib.sha256((str(message) + str(randNum)).encode('utf-8')).hexdigest(),16) == pow(signature, publicE, publicN))        
         
-##########################################################################################
-
 import websocket
 import hashlib
 from tkinter import *
 from tkinter.ttk import *
 import random
-# To start machine in case of a poll
+
 class poll:
     def __init__(self, ws):
-    	#Getting all information required during the poll
-    	#self here is  CTF
         self.ws = ws
         self.signer = Signer()
-        #CTF's public info
         self.publicKey = self.signer.getPublicKey()
         self.n = self.publicKey['n']
         self.e = self.publicKey['e']
         
     def poll_response(self, poll_answer, eligble_answer):
-       #Poll response sent from UI as eligible_answer
-       #Yes and no as Poll response for testing the code 
-       if (poll_answer == 0): poll_answer = 2;
-       if (eligble_answer == 0): eligble_answer = "n";
-       if (eligble_answer == 1): eligble_answer = "y";
+        
        
- 	   ### l = The 'randomly generated identification number, large enough to avoid duplicates with other voters' as acc. to assignment.
-       l = random.randint(1,self.n)
-       message = 'y' + ' ' + 'n'
-       ballot = message + str(l)       
-       #Voter object from voter class created.
-       voter = Voter(self.n, eligble_answer)
-       message_hash = hashlib.sha256(str(ballot).encode('utf-8')) # hashing using SHA-256
-       message_hash = message_hash.hexdigest()
-       message_hash = int(message_hash,16)
-       #Blinded the ballot with public key info
-       blindMessage = voter.blindMessage(message_hash, self.n, self.e)
-       #Sent the blinded message to the CTF 10 times.
-       for i in range(10):
-       		self.ws.send("Blinded message: " + str(blindMessage))
-       # Code of CTF signing message after checking 10 blind messages from the voter.
-       signedBlindMessage = self.signer.signMessage(blindMessage, voter.getEligibility())
-       if signedBlindMessage == None:
-       	   #If the voter is ineligible CTF sends this.
-           self.ws.send("INELIGIBLE VOTER....VOTE NOT AUTHORIZED!")
-       else:
-       	   #CTF sent signed blind message.
-           self.ws.send("Signed blinded message: " + str(signedBlindMessage))
-           #Unblinding of signed blind message by voter
-           signedMessage = voter.unwrapSignature(signedBlindMessage, self.n)
-           decodedMessage = str(message)
-           #Verify if ballot is correctly the same as sent before.
-           verificationStatus = verifySignature(message, l ,signedMessage, self.e, self.n)
-           #Choosing vote from ballot.
-           if(poll_answer == 'n'):
-           		signedMessage = signedMessage[2:3] ####position of no
-           else:
-           		signedMessage = signedMessage[0:1] #### position of yes
-           # Sending signed message to vote finally anonymously.
-           self.ws.send("Signature: " + str(signedMessage))
-           #Voting being done by the CTF.
-           self.ws.send("Decoded message: " + str(decodedMessage))
-           self.ws.send("Hashed message: " + str(hashlib.sha256(str(message)+str(l)).hexdigest()))
-           self.ws.send("Verification status: " + str(verificationStatus))
+        if (poll_answer == 0): 
+            poll_answer = 2
+
+
+        if (eligble_answer == 0):
+            eligble_answer = "n"
+        if (eligble_answer == 1): 
+            eligble_answer = "y"
        
+        l = random.randint(1,self.n)
+        message = poll_answer
+        concat_message = str(message) + str(l)
+
+        voter = Voter(self.n, eligble_answer)
+        message_hash = hashlib.sha256(concat_message.encode('utf-8'))
+        message_hash = message_hash.hexdigest()
+        message_hash = int(message_hash,16)
+        blindMessage = voter.blindMessage(message_hash, self.n, self.e)
+#         print(1)
+        print("Blinded message: " + str(blindMessage))
+#         print(2)
+        signedBlindMessage = self.signer.signMessage(blindMessage, voter.getEligibility())
+        if signedBlindMessage == None:
+            print("INELIGIBLE VOTER....VOTE NOT AUTHORIZED!")
+        else:
+            print("Signed blinded message: " + str(signedBlindMessage))
+            signedMessage = voter.unwrapSignature(signedBlindMessage, self.n)
+            decodedMessage = str(message)
+            verificationStatus = verifySignature(message, l ,signedMessage, self.e, self.n)
+            print("Signature: " + str(signedMessage))
+            print("Decoded message: " + str(decodedMessage))
+            print("Hashed message: " + str(hashlib.sha256((str(message)+str(l)).encode('utf-8')).hexdigest()))
+            print("Verification status: " + str(verificationStatus))
+
        
 class poll_machine:
-    #UI part seen by voter
+    
     def __init__(self):
-        self.ws = websocket.WebSocketApp("ws://localhost:8000",
+        websocket.enableTrace(True)
+        self.ws = websocket.WebSocketApp("ws://localhost:8888",
                                   on_message = self.on_message,
                                   on_error = self.on_error,
                                   on_close = self.on_close)
+        
         self.p = poll(self.ws)
         self.master = Tk()
         self.master.configure(background='yellow')
         self.var_poll = IntVar()
         self.var_answer = IntVar()
         
-        self.question_poll = Label(self.master, text="Is Bitcoin cool?")
-        self.yesBox_poll = Radiobutton(self.master, text="Yes", variable=self.var_poll, value=1)
-        self.noBox_poll = Radiobutton(self.master, text="No", variable=self.var_poll, value=0)
+        self.question_poll = Label(self.master, text="Vote for Trump or Obama?")
+        self.yesBox_poll = Radiobutton(self.master, text="Trump", variable=self.var_poll, value=1)
+        self.noBox_poll = Radiobutton(self.master, text="Obama", variable=self.var_poll, value=0)
         self.question_eligible = Label(self.master, text="Are you eligible to vote?")
         self.yesBox_eligible = Radiobutton(self.master, text="Yes", variable=self.var_answer, value=1)
         self.noBox_eligible = Radiobutton(self.master, text="No", variable=self.var_answer, value=0)
@@ -359,10 +347,10 @@ class poll_machine:
         self.takePollButton.grid_remove()
 
     def main(self):    
-        #websocket.enableTrace(True)
+#         websocket.enableTrace(True)
        
-        self.ws.on_open = self.on_open()
-     #   self.ws.run_forever()
+        self.on_open()
+#         self.ws.run_forever()
     
 pm = poll_machine()
 pm.main()
@@ -372,10 +360,12 @@ pm.main()
 
 
 
-
-
-
-
-
     
     
+
+
+# In[ ]:
+
+
+
+

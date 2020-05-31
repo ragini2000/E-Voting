@@ -1,4 +1,3 @@
-
 # Cryptomath Module for both protocols to be implemented
 import random
 
@@ -11,7 +10,7 @@ def gcd(a, b):
         y = r
     return x
 
-def extended_GCD(a,b):
+def extendedGCD(a,b):
     # Returns integers u, v such that au + bv = gcd(a,b).
     x, y = a, b
     u1, v1 = 1, 0
@@ -26,14 +25,14 @@ def extended_GCD(a,b):
         u2, v2 = u, v
     return (u1, v1)
 
-def find_Mod_inverse(a, m):
+def findModInverse(a, m):
     # Returns the inverse of a modulo m, if it exists.
     if gcd(a,m) != 1:
         return None
-    u, v = extended_GCD(a,m)
+    u, v = extendedGCD(a,m)
     return u % m
 
-def Rabin_Miller(n):
+def RabinMiller(n):
     # Applies the probabilistic Rabin-Miller test for primality.
     if n < 2:
         return False
@@ -97,7 +96,7 @@ def isPrime(n):
         if pow(base, n - 1, n) != 1:
             return False
     # Apply Rabin-Miller test.
-    return Rabin_Miller(n)
+    return RabinMiller(n)
 
 
 def findPrime(bits=1024, tries=10000):
@@ -139,7 +138,7 @@ import random, hashlib #Initialize Library
 
 class Signer: 
     #Creating the class to sign the vote
-    def __init__(self):
+    def _init_(self):
         self.publicKey, self.privateKey = (self.generateInformation())
     
     def generateInformation(self):
@@ -156,8 +155,7 @@ class Signer:
             if gcd(e, phi) == 1:
                 foundEncryptionKey = True
     
-        d = find_Mod_inverse
-    (e, phi)
+        d = findModInverse(e, phi)
    
         publicInfo = {"n" : n, "e": e} #Public key of voter
         privateInfo = {"n" : n, "d": d} #Private key of voter
@@ -181,7 +179,7 @@ class Signer:
         
  
 class Voter:
-    def __init__(self, n, eligible):
+    def _init_(self, n, eligible):
         self.eligible = eligible 
     
     def getEligibility(self):
@@ -197,19 +195,19 @@ from tkinter.ttk import *
 import random
 # To start machine in case of a poll
 class poll:
-    def __init__(self, ws):
-        #to get all information required during the poll
-        # seLf here means CTF
+    def _init_(self, ws):
+        #Getting all information required during the poll
+        # seLf = CTF
         self.ws = ws
-        self.signer = Signer() # calls the Signer function
-        self.publicKey = self.signer.getPublicKey() # to get the public key
-        #CTF's public information
+        self.signer = Signer()
+        self.publicKey = self.signer.getPublicKey()
+        #CTF's public info
         self.n = self.publicKey['n']
         self.e = self.publicKey['e']
         
     def poll_response(self, poll_answer, eligble_answer):
        #Poll response sent from UI as eligible_answer
-       #Yes and No as Poll response for testing the code 
+       #Yes and no as Poll response for testing the code 
        if (poll_answer == 0): poll_answer = 2;
        if (eligble_answer == 0): eligble_answer = "n";
        if (eligble_answer == 1): eligble_answer = "y";
@@ -218,10 +216,10 @@ class poll:
        #Voter class created with eligible answer and public key info.
        voter = Voter(self.n, eligble_answer)
 
-       message_hash = hashlib.sha256(str(message).encode('utf-8')) # Hashing done using SHA-256
+       message_hash = hashlib.sha256(str(message).encode('utf-8'))
        message_hash = message_hash.hexdigest()
        message_hash = int(message_hash,16)
-       #Signing of the message.
+       #Signs the message.
        signedMessage = self.signer.signMessage(message_hash,voter.getEligibility())
 
        #Sent the signed message to the CTF.
@@ -232,7 +230,7 @@ class poll:
        
 class poll_machine:
     #UI part seen by voter
-    def __init__(self):
+    def _init_(self):
         self.ws = websocket.WebSocketApp("ws://localhost:8000",
                                   on_message = self.on_message,
                                   on_error = self.on_error,
@@ -321,6 +319,3 @@ class poll_machine:
     
 pm = poll_machine()
 pm.main()
-
-
-    
